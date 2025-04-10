@@ -61,14 +61,19 @@ export class UsersService {
     return await query.getOne();
   }
 
-  async generateEmailVerification(userId: number) {
+  async generateEmailVerification(
+    userId: number,
+    isRecuperandoPassword: boolean = false,
+  ) {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    if (user.emailVerifiedAt) {
-      throw new UnprocessableEntityException('Account already verified');
+    if (!isRecuperandoPassword) {
+      if (user.emailVerifiedAt) {
+        throw new UnprocessableEntityException('Account already verified');
+      }
     }
 
     const otp = await this.verificationTokenService.generateOtp(user.id);
@@ -107,5 +112,8 @@ export class UsersService {
     await this.usersRepository.save(user);
 
     return true;
+  }
+  async findByEmail(username: string): Promise<User | null> {
+    return this.usersRepository.findOne({ where: { username } });
   }
 }
